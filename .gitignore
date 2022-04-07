@@ -1,0 +1,12 @@
+# fichier relatifs à l'utilisateur
+.vscode/
+__pycache__/
+output/
+
+# datasets
+vacsi-s-a-reg-*.csv
+vacsi-s-a-reg-*.ods
+
+# fichiers de tests
+*.ipynb
+test.py
