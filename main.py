@@ -1,35 +1,3 @@
-"""
-0: reg;
-1: clage_vacsi;
-2: jour;
-3: n_dose1_h;
-4: n_complet_h;
-5: n_rappel_h;
-6: n_cum_dose1_h;
-7: n_cum_complet_h;
-8: n_cum_rappel_h;
-9: couv_dose1_h;
-10: couv_complet_h;
-11: couv_rappel_h;
-12: n_dose1_f;
-13: n_complet_f;
-14: n_rappel_f;
-15: n_cum_dose1_f;
-16: n_cum_complet_f;
-17: n_cum_rappel_f;
-18: couv_dose1_f;
-19: couv_complet_f;
-20: couv_rappel_f;
-21: n_dose1_e;
-22: n_complet_e;
-23: n_rappel_e;
-24: n_cum_dose1_e;
-25: n_cum_complet_e;
-26: n_cum_rappel_e;
-27: couv_dose1_e;
-28: couv_complet_e;
-29: couv_rappel_e
-"""
 # Importation des utilitaires n'étant pas en rapports avec la logique du code
 from typing import Any, Callable, List, Optional, Tuple, Union
 
