@@ -293,9 +293,12 @@ def convert_database(
     return data
 
 # Partie de traitement des images
-def export_plot_to_image() -> Image.Image:
+def export_plot_to_image(fig=None) -> Image.Image:
     buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
+    if fig is None:
+        plt.savefig(buffer, format='png')
+    else:
+        fig.savefig(buffer, format='png')
 
     img = Image.open(buffer)
     
@@ -314,12 +317,17 @@ def get_diagram_1(database: List[List[Any]]) -> Image.Image:
     x_axis = [
         ligne[2] for ligne in database
     ]
-    plt.figure()
-    plt.fill_between(x_axis, une_dose, 0, )
-    plt.fill_between(x_axis, complet, 0)
-    plt.fill_between(x_axis, rappel, 0)
-
-    return export_plot_to_image()
+    fig, ax = plt.subplots()
+    ax.set_title("Nombre cumulé de personnes vaccinées")
+    ax.set_ylabel("Nombre de personnes vaccinées")
+    plt.xticks(rotation=30, ha="right")
+    
+    ax.fill_between(x_axis, une_dose, 0, label="Une dose (partiel)", color="tab:blue")
+    ax.fill_between(x_axis, complet, 0, label="Deux doses (complet)", color="tab:orange")
+    ax.fill_between(x_axis, rappel, 0, label="Trois doses (rappel)", color="tab:green")
+    ax.legend(loc='upper left')
+    
+    return export_plot_to_image(fig)
 
 def get_diagram_2(database: List[List[Any]]) -> Image.Image:
     last_data = database[-1]
@@ -327,36 +335,59 @@ def get_diagram_2(database: List[List[Any]]) -> Image.Image:
     axes = ['Hommes', 'Femmes', 'Couverture totale']
     values = [float(last_data[10]), float(last_data[19]), float(last_data[28])]
 
-    plt.figure()
-    plt.bar(axes, values)
-    plt.axis([-1, 3, 0, 100])
+    fig, ax = plt.subplots()
+    ax.set_title("Couverture régionale")
+    ax.set_ylabel("Couverture vaccinale (en %)")
 
-    return export_plot_to_image()
+    ax.bar(axes, values, label="Couverture vaccinale", color=["tab:blue", "tab:pink", "tab:grey"])
+    ax.axis([-1, 3, 0, 100])
+
+    return export_plot_to_image(fig)
 
 def get_diagram_3(database: List[List[Any]]) -> Image.Image:
-    plt.figure()
+    fig, ax = plt.subplots()
+    ax.set_title("Évolution de la couverture vaccinale")
+    ax.set_ylabel("Pourcentage de population vaccinée")
+    plt.xticks(rotation=30, ha="right")
+
     for code, label in AGES:
         data = [line for line in database if line[1]==code]
         couv = [float(line[28]) for line in data]
         dates = [line[2] for line in data]
-        plt.plot(dates, couv)
+        ax.plot(dates, couv, label=label)
     
-    return export_plot_to_image()
+    ax.legend(loc='upper left', fontsize=7)
+    
+    return export_plot_to_image(fig)
 
 def get_diagram_4(database: List[List[Any]]) -> Image.Image:
-    plt.figure()
+    fig, ax = plt.subplots()
+    ax.set_title("État de la vaccination dans une région")
+
     line = database[-1] # on prend en compte le fait que la bdd est triée par ordre croissant de date
     dose_3 = float(line[29])
     dose_2 = float(line[28]) - dose_3
     dose_1 = float(line[27]) - (dose_2 + dose_3)
-    data = [dose_1, dose_2, dose_3, 100-float(line[27])]
-    plt.pie(
-        data
+    data = [100-float(line[27]), dose_1, dose_2, dose_3]
+    ax.pie(
+        data,
+        colors=["tab:red", "tab:blue", "tab:orange", "tab:green"],
     )
-    return export_plot_to_image()
+
+    ax.legend(
+        labels=["Pas vacciné", "Une dose (partiel)", "Deux doses (complet)", "Trois doses (rappel)"],
+        loc="lower left",
+        bbox_to_anchor=(-0.3, 0.)
+    )
+
+    return export_plot_to_image(fig)
 
 def get_diagram_5(database: List[List[Any]]) -> Image.Image:
-    plt.figure()
+    fig, ax = plt.subplots()
+    ax.set_title("Répartition des vaccinations sur les classes d'âges")
+    ax.set_ylabel("Classe d'âge")
+    ax.set_xlabel("Population vaccinée (en %)")
+
     dose_1, dose_2, dose_3, other = [], [], [], []
     regions = []
     for code, label in AGES:
@@ -372,15 +403,19 @@ def get_diagram_5(database: List[List[Any]]) -> Image.Image:
         other.append(100.0)
         regions.append(label)
     
-    plt.barh(regions, other)
-    plt.barh(regions, dose_3)
-    plt.barh(regions, dose_2)
-    plt.barh(regions, dose_1)
+    ax.barh(regions, other)
+    ax.barh(regions, dose_3)
+    ax.barh(regions, dose_2)
+    ax.barh(regions, dose_1)
 
-    return export_plot_to_image()
+    return export_plot_to_image(fig)
 
 def get_diagram_6(database: List[List[Any]]) -> Image.Image:
-    plt.figure()
+    fig, ax = plt.subplots()
+    ax.set_title("5 régions ayant la meilleure couverture vaccinale")
+    ax.set_ylabel("Couverture vaccinale (en %)")
+    plt.xticks(rotation=10, ha="right")
+
     regions = []
     for code, nom in REGIONS.items():
         reg_data = [data for data in database if data[0] == code]
@@ -394,12 +429,12 @@ def get_diagram_6(database: List[List[Any]]) -> Image.Image:
     regions.sort(key=lambda reg: reg[1], reverse=True)
     regions = regions[:5] # on récupère les 5 régions qui ont la plus haute couverture
     
-    plt.axis([-1, 5, 0, 100])
+    ax.axis([-1, 5, 0, 100])
 
     for code, couv, nom in regions:
-        plt.bar(nom, couv)
+        ax.bar(nom, couv)
     
-    return export_plot_to_image()
+    return export_plot_to_image(fig)
 
 # Partie logique du script
 if __name__ == "__main__": # on permet à un autre programme d'utiliser le code
