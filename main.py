@@ -45,7 +45,7 @@ import datetime
 
 # Importation des modules nécessaires au traitement de l'image
 import matplotlib.pyplot as plt
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 import io # nécessaire pour la conversion de l'image plot en image PIL
 
@@ -336,10 +336,10 @@ def get_diagram_2(database: List[List[Any]]) -> Image.Image:
     values = [float(last_data[10]), float(last_data[19]), float(last_data[28])]
 
     fig, ax = plt.subplots()
-    ax.set_title("Couverture régionale")
+    ax.set_title(f"Couverture vaccinale")
     ax.set_ylabel("Couverture vaccinale (en %)")
 
-    ax.bar(axes, values, label="Couverture vaccinale", color=["tab:blue", "tab:pink", "tab:grey"])
+    ax.bar(axes, values, label="Couverture vaccinale", color=["tab:red", "tab:green", "tab:grey"])
     ax.axis([-1, 3, 0, 100])
 
     return export_plot_to_image(fig)
@@ -362,7 +362,7 @@ def get_diagram_3(database: List[List[Any]]) -> Image.Image:
 
 def get_diagram_4(database: List[List[Any]]) -> Image.Image:
     fig, ax = plt.subplots()
-    ax.set_title("État de la vaccination dans une région")
+    ax.set_title(f"État de la vaccination")
 
     line = database[-1] # on prend en compte le fait que la bdd est triée par ordre croissant de date
     dose_3 = float(line[29])
@@ -402,16 +402,21 @@ def get_diagram_5(database: List[List[Any]]) -> Image.Image:
         age_dose_3 = float(data[29])
         age_dose_2 = float(data[28]) - age_dose_3
         age_dose_1 = float(data[27]) - (age_dose_2 + age_dose_3)
-        dose_1.append(age_dose_1)
-        dose_2.append(age_dose_2)
-        dose_3.append(age_dose_3)
-        other.append(100.0)
+        non_vaccine = 100 - float(data[27])
+        other.append(non_vaccine)
+        dose_1.append(age_dose_1 + non_vaccine)
+        dose_2.append(age_dose_2 + age_dose_1 + non_vaccine)
+        dose_3.append(age_dose_3 + age_dose_2 + age_dose_1 + non_vaccine)
         regions.append(label)
     
-    ax.barh(regions, other)
-    ax.barh(regions, dose_3)
-    ax.barh(regions, dose_2)
-    ax.barh(regions, dose_1)
+    ax.barh(regions, dose_3, color="tab:green", label="Trois doses (rappel)")
+    ax.barh(regions, dose_2, color="tab:orange", label="Deux doses (complet)")
+    ax.barh(regions, dose_1, color="tab:blue", label="Une dose (partiel)")
+    ax.barh(regions, other, color="tab:red", label="Pas vacciné")
+
+    ax.legend(
+        loc="upper right",
+    )
 
     return export_plot_to_image(fig)
 
@@ -509,32 +514,31 @@ if __name__ == "__main__": # on permet à un autre programme d'utiliser le code
     print(f"{colors['fg']['green']}Fait{colors['reset']}")
 
     print("Génération de l'image finale...", end=" ", flush=True)
-    print(f"{colors['fg']['green']}Fait{colors['reset']}")
-
-    # exportation des images dans un dossier temporaire
-    for i, diagram in enumerate([
-        diagram1,
-        diagram2,
-        diagram3,
-        diagram4,
-        diagram5,
-        diagram6,
-    ]):
-        diagram.save(f"output/diagram_{i+1}.png")
     
     # exportation des images dans une seule image
     diagram_size_x, diagram_size_y = diagram1.size
 
-    # on crée une image vide
-    img = Image.new("RGB", (diagram_size_x * 2, diagram_size_y * 3))
+    # on crée une image vide avec un fond blanc
+    img = Image.new("RGB", (diagram_size_x * 2, diagram_size_y * 3 + 64), "white")
+
+    # on affiche "Données relatives à la COVID-19" en haut de l'image
+    img_draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype("arial.ttf", 60)
+    img_draw.text((diagram_size_x, 24), "Données relatives à la COVID-19", (0, 0, 0), font=font, anchor="mm")
 
     # on colle les diagrammes dans l'image
-    img.paste(diagram1, (0, 0))
-    img.paste(diagram2, (diagram_size_x, 0))
-    img.paste(diagram3, (0, diagram_size_y))
-    img.paste(diagram4, (diagram_size_x, diagram_size_y))
-    img.paste(diagram5, (0, diagram_size_y * 2))
-    img.paste(diagram6, (diagram_size_x, diagram_size_y * 2))
+    img.paste(diagram1, (0, 64))
+    img.paste(diagram2, (diagram_size_x, 64))
+    img.paste(diagram3, (0, diagram_size_y + 64))
+    img.paste(diagram4, (diagram_size_x, diagram_size_y + 64))
+    img.paste(diagram5, (0, diagram_size_y * 2 + 64))
+    img.paste(diagram6, (diagram_size_x, diagram_size_y * 2 + 64))
+
+    # on affiche en petit le nom de la région en dessous du titre
+    font = ImageFont.truetype("arial.ttf", 30)
+    img_draw.text((diagram_size_x, 60), f"Région : {REGIONS[reg]}", (0, 0, 0), font=font, anchor="mm")
 
     # on enregistre l'image dans le fichier output.png
     img.save("output.png")
+    
+    print(f"{colors['fg']['green']}Fait{colors['reset']}")
