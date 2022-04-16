@@ -200,6 +200,15 @@ def ask_file() -> str:
     return chemin
 
 def ask_date(message: str = "Entrez la date (laissez vide pour ne pas utiliser de date): ") -> datetime.datetime:
+    """Demande à l'utilisateur la date à utiliser pour la sélection.
+
+    :param message: Le message à afficher au moment de demander la
+    date, par défaut :
+    "Entrez la date (laissez vide pour ne pas utiliser de date): "
+    :type message: str, optional
+    :return: La date indiquée par l'utilisateur
+    :rtype: datetime.datetime
+    """
     raw_date = input(message + COLORS['fg']['yellow'])
     print(COLORS['reset'], end="")
     if raw_date == "":
@@ -228,7 +237,6 @@ def ask_date(message: str = "Entrez la date (laissez vide pour ne pas utiliser d
             )
         except ValueError:
             pass
-        # TODO mettre plus de formats de dates et heure
         print(f"{COLORS['fg']['red']}Je n'ai pas comprit la date {raw_date} !{COLORS['reset']} Réessaies avec un autre format !") # on affiche un message d'erreur
         return ask_date(message) # on rappelle la fonction pour redemander à l'utilisateur la date
 
@@ -262,6 +270,7 @@ def filter_check(
         row_date = datetime.datetime.fromisoformat(row[2])
         # récupération de la date sous forme d'un objet facilement utilisable en python
         date_check = True
+        # on vérifie que la date est bien comprise entre les limites
         if date[0] is not None: # on ignore le cas où on a pas de limite minimum
             date_check = date_check and date[0] <= row_date
         date_check = date_check and date[1] >= row_date
@@ -286,6 +295,7 @@ def apply_filter(
     :return: La base de données avec les filtres appliqués
     :rtype: List[List[Any]]
     """
+    # on applique le filtre en utilisant la fonction filter_check
     return selection(
         data,
         lambda row: filter_check(row, reg, date, keep_ages),
@@ -302,6 +312,7 @@ def convert_database(
     :rtype: List[List[Any]]
     """
     for row in data:
+        # on convertit la date en objet datetime.datetime si nécessaire
         if not isinstance(row[2], datetime.datetime):
             row[2] = datetime.datetime.fromisoformat(row[2])
     
@@ -317,12 +328,17 @@ def export_plot_to_image(fig=None) -> Image.Image:
     :return: L'image de la figure
     :rtype: Image.Image
     """
+    # puisqu'on ne peut enregistrer une image que dans un fichier, on
+    # crée un fichier temporaire stocké dans la mémoire
     buffer = io.BytesIO()
+
+    # si aucune figure n'est spécifiée, on utilise la figure courante
     if fig is None:
         plt.savefig(buffer, format='png')
     else:
         fig.savefig(buffer, format='png')
 
+    # on créé un image à partir du fichier temporaire
     img = Image.open(buffer)
     
     return img
@@ -338,6 +354,8 @@ def get_diagram_1(database: List[List[Any]]) -> Image.Image:
     :return: L'image correspondant au graphique
     :rtype: Image.Image
     """
+    # on récupère les données correspondant aux différents stades de
+    # vaccination
     une_dose = [
         float(ligne[24]) for ligne in database
     ]
@@ -350,14 +368,20 @@ def get_diagram_1(database: List[List[Any]]) -> Image.Image:
     x_axis = [
         ligne[2] for ligne in database
     ]
+    # on créé le graphique
     fig, ax = plt.subplots()
     ax.set_title("Nombre cumulé de personnes vaccinées")
+    # on indique les axes
     ax.set_ylabel("Nombre de personnes vaccinées")
+    # on tourne les valeurs de l'axe X de 30°
     plt.xticks(rotation=30, ha="right")
     
+    # on trace les courbes
     ax.fill_between(x_axis, une_dose, 0, label="Une dose (partiel)", color="tab:blue")
     ax.fill_between(x_axis, complet, 0, label="Deux doses (complet)", color="tab:orange")
     ax.fill_between(x_axis, rappel, 0, label="Trois doses (rappel)", color="tab:green")
+
+    # on indique l'emplacement de la légende
     ax.legend(loc='upper left')
     
     return export_plot_to_image(fig)
@@ -372,16 +396,26 @@ def get_diagram_2(database: List[List[Any]]) -> Image.Image:
     :return: L'image correspondant au graphique
     :rtype: Image.Image
     """
+    # on récupère les données du dernier jour (en assumant que les
+    # données sont triés par date)
     last_data = database[-1]
     
+    # on indique les étiquettes
     axes = ['Hommes', 'Femmes', 'Couverture totale']
+    # on récupère les valeurs
     values = [float(last_data[10]), float(last_data[19]), float(last_data[28])]
 
+    # on créé le graphique
     fig, ax = plt.subplots()
+    # on indique le titre
     ax.set_title(f"Couverture vaccinale")
+    # on indique les axes
     ax.set_ylabel("Couverture vaccinale (en %)")
 
+    # on affiche le graphique
     ax.bar(axes, values, label="Couverture vaccinale", color=["tab:red", "tab:green", "tab:grey"])
+
+    # on paramètre les axes pour une meilleur lisibilité
     ax.axis([-1, 3, 0, 100])
 
     return export_plot_to_image(fig)
@@ -399,17 +433,26 @@ def get_diagram_3(database: List[List[Any]]) -> Image.Image:
     :return: L'image correspondant au graphique
     :rtype: Image.Image
     """
+    # on créé le graphique
     fig, ax = plt.subplots()
+    # on indique un titre
     ax.set_title("Évolution de la couverture vaccinale")
+    # on indique les axes
     ax.set_ylabel("Pourcentage de population vaccinée")
+    # on tourne les valeurs de l'axe X de 30°
     plt.xticks(rotation=30, ha="right")
 
-    for code, label in AGES:
+    for code, label in AGES: # pour chaque classe d'âges
+        # on récupère toutes les données de la classe d'âges
         data = [line for line in database if line[1]==code]
+        # on récupère les valeurs de la couverture vaccinale
         couv = [float(line[28]) for line in data]
+        # on récupère les dates correspondantes aux valeurs
         dates = [line[2] for line in data]
+        # on affiche le graphique
         ax.plot(dates, couv, label=label)
     
+    # on indique l'emplacement de la légende
     ax.legend(loc='upper left', fontsize=7)
     
     return export_plot_to_image(fig)
@@ -424,24 +467,29 @@ def get_diagram_4(database: List[List[Any]]) -> Image.Image:
     :return: L'image correspondant au graphique
     :rtype: Image.Image
     """
+    # on créé le graphique
     fig, ax = plt.subplots()
+    # on indique le titre
     ax.set_title(f"État de la vaccination")
 
-    line = database[-1] # on prend en compte le fait que la bdd est triée par ordre croissant de date
+    # on récupère les données en prenant en compte que les données sont triées par date
+    line = database[-1]
+    # on récupère les valeurs de la couverture vaccinale
     dose_3 = float(line[29])
     dose_2 = float(line[28]) - dose_3
     dose_1 = float(line[27]) - (dose_2 + dose_3)
     data = [100-float(line[27]), dose_1, dose_2, dose_3]
 
-    # on spécifie le décalage des non vaccinés
-
-    _, _, autopct = ax.pie(
+    # on créé le diagramme camembert
+    ax.pie(
         data,
         colors=["tab:red", "tab:blue", "tab:orange", "tab:green"],
+        # on spécifie la mise en forme des labels
         textprops={'size': 'large', 'fontweight': 'bold', 'color': 'white'},
         autopct = lambda value: f"{value:.1f}%",
     )
 
+    # on affiche le graphique
     ax.legend(
         labels=["Pas vacciné", "Une dose (partiel)", "Deux doses (complet)", "Trois doses (rappel)"],
         loc="lower left",
@@ -462,14 +510,18 @@ def get_diagram_5(database: List[List[Any]]) -> Image.Image:
     :return: L'image correspondant au graphique
     :rtype: Image.Image
     """
+    # on créé le graphique
     fig, ax = plt.subplots()
+    # on indique le titre
     ax.set_title("Répartition des vaccinations sur les classes d'âges")
+    # on indique les axes
     ax.set_ylabel("Classe d'âge")
     ax.set_xlabel("Population vaccinée (en %)")
 
-    dose_1, dose_2, dose_3, other = [], [], [], []
-    regions = []
-    for code, label in AGES:
+    # on récupère les données par dose
+    dose_1, dose_2, dose_3, non_vaccine = [], [], [], []
+    classe_age = []
+    for code, label in AGES: # pour chaque classe d'âges
         data = [line for line in database if line[1]==code][-1]
         # on récupère les informations les plus récentes, en
         # assumant que les données sont triées par date croissante
@@ -477,16 +529,19 @@ def get_diagram_5(database: List[List[Any]]) -> Image.Image:
         age_dose_2 = float(data[28]) - age_dose_3
         age_dose_1 = float(data[27]) - (age_dose_2 + age_dose_3)
         non_vaccine = 100 - float(data[27])
-        other.append(non_vaccine)
+
+        # on ajoute les valeurs aux listes
+        non_vaccine.append(non_vaccine)
         dose_1.append(age_dose_1 + non_vaccine)
         dose_2.append(age_dose_2 + age_dose_1 + non_vaccine)
         dose_3.append(age_dose_3 + age_dose_2 + age_dose_1 + non_vaccine)
-        regions.append(label)
+        # on ajoute la classe d'âge à la liste
+        classe_age.append(label)
     
-    ax.barh(regions, dose_3, color="tab:green", label="Trois doses (rappel)")
-    ax.barh(regions, dose_2, color="tab:orange", label="Deux doses (complet)")
-    ax.barh(regions, dose_1, color="tab:blue", label="Une dose (partiel)")
-    ax.barh(regions, other, color="tab:red", label="Pas vacciné")
+    ax.barh(classe_age, dose_3, color="tab:green", label="Trois doses (rappel)")
+    ax.barh(classe_age, dose_2, color="tab:orange", label="Deux doses (complet)")
+    ax.barh(classe_age, dose_1, color="tab:blue", label="Une dose (partiel)")
+    ax.barh(classe_age, non_vaccine, color="tab:red", label="Pas vacciné")
 
     ax.legend(
         loc="upper right",
@@ -504,13 +559,17 @@ def get_diagram_6(database: List[List[Any]]) -> Image.Image:
     :return: L'image correspondant au graphique
     :rtype: Image.Image
     """
+    # on créé le graphique
     fig, ax = plt.subplots()
+    # on indique le titre
     ax.set_title("5 régions ayant la meilleure couverture vaccinale")
+    # on indique les axes
     ax.set_ylabel("Couverture vaccinale (en %)")
+    # on tourne les labels de l'axe x de 10°
     plt.xticks(rotation=10, ha="right")
 
     regions = []
-    for code, nom in REGIONS.items():
+    for code, nom in REGIONS.items(): # pour chaque région
         reg_data = [data for data in database if data[0] == code]
         # on récupère les informations les plus récentes, en assumant
         # que les données sont triées par date croissante et limitée
@@ -519,11 +578,14 @@ def get_diagram_6(database: List[List[Any]]) -> Image.Image:
             [code, float(reg_data[-1][28]), nom]
         )
     
+    # on trie les régions par ordre décroissant
     regions.sort(key=lambda reg: reg[1], reverse=True)
     regions = regions[:5] # on récupère les 5 régions qui ont la plus haute couverture
     
+    # on paramétre les axes pour une meilleur lisibilité
     ax.axis([-1, 5, 0, 100])
 
+    # on affiche la barre pour chaque région
     for code, couv, nom in regions:
         ax.bar(nom, couv)
     
