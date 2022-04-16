@@ -91,7 +91,6 @@ try:
     # Importation des modules nécessaires au traitement de l'image
     import matplotlib.pyplot as plt
     from PIL import Image, ImageDraw, ImageFont
-    import numpy as np
 except ImportError as e:
     print("Vous devez installer les modules matplotlib et pillow pour utiliser ce programme")
     print("Pour installer les modules, utilisez la commande suivante:")
