@@ -198,7 +198,8 @@ def ask_file() -> str:
                 print("Les fichiers suivants ont étés trouvés :")
                 for i, chemin_possible in enumerate(chemins): # affichage des chemins trouvés
                     print(f" {COLORS['reverse']}{i}{COLORS['reset']} : {chemin_possible}") # affichage au format "0 : [CHEMIN]"
-                index = input("Indiquez l'indice du fichier cible : ")
+                index = input(f"Indiquez l'indice du fichier cible : {COLORS['fg']['yellow']}")
+                print(COLORS['reset'], end="")
                 if not index.isdigit(): # on demande à nouveau le chemin si la valeur indiquée n'est pas un nombre
                     print("L'indice indiqué n'est pas un nombre.")
                     continue
