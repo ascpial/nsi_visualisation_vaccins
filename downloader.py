@@ -106,7 +106,8 @@ def start_download() -> str:
     print(f"{COLORS['fg']['green']}Fait{COLORS['reset']}")
     if len(old_files) > 0:
         print("Des anciens fichiers ont étés trouvés.")
-        response = input(f"Voulez vous les garder ({COLORS['fg']['green']}O{COLORS['reset']}/{COLORS['fg']['red']}n{COLORS['reset']}) ? ")
+        response = input(f"Voulez vous les garder ({COLORS['fg']['green']}O{COLORS['reset']}/{COLORS['fg']['red']}n{COLORS['fg']['yellow']}) ? ")
+        print(f"{COLORS['reset']}", end="")
         if response.lower() == "n":
             for filename in old_files:
                 os.remove(filename)
