@@ -21,8 +21,43 @@ import json
 import glob
 import os
 
-# Un plus joli output :)
-from utils import colors
+# Cette constante permet de gérer l'affichage en couleur
+COLORS = {
+    'reset':'\033[0m',
+    'bold':'\033[01m',
+    'disable':'\033[02m',
+    'underline':'\033[04m',
+    'reverse':'\033[07m',
+    'strikethrough':'\033[09m',
+    'invisible':'\033[08m',
+    'fg': {
+        'black':'\033[30m',
+        'red':'\033[31m',
+        'green':'\033[32m',
+        'orange':'\033[33m',
+        'blue':'\033[34m',
+        'purple':'\033[35m',
+        'cyan':'\033[36m',
+        'lightgrey':'\033[37m',
+        'darkgrey':'\033[90m',
+        'lightred':'\033[91m',
+        'lightgreen':'\033[92m',
+        'yellow':'\033[93m',
+        'lightblue':'\033[94m',
+        'pink':'\033[95m',
+        'lightcyan':'\033[96m',
+    },
+    'bg': {
+        'black':'\033[40m',
+        'red':'\033[41m',
+        'green':'\033[42m',
+        'orange':'\033[43m',
+        'blue':'\033[44m',
+        'purple':'\033[45m',
+        'cyan':'\033[46m',
+        'lightgrey':'\033[47m',
+    }
+}
 
 # Paramétrage du proxy pour le réseau du lycée
 if False:
@@ -68,10 +103,10 @@ def start_download() -> str:
     new_file = get_file()
     old_files = [filename for filename in old_files if filename != new_file['title']]
     download_file(new_file)
-    print(f"{colors['fg']['green']}Fait{colors['reset']}")
+    print(f"{COLORS['fg']['green']}Fait{COLORS['reset']}")
     if len(old_files) > 0:
         print("Des anciens fichiers ont étés trouvés.")
-        response = input(f"Voulez vous les garder ({colors['fg']['green']}O{colors['reset']}/{colors['fg']['red']}n{colors['reset']}) ? ")
+        response = input(f"Voulez vous les garder ({COLORS['fg']['green']}O{COLORS['reset']}/{COLORS['fg']['red']}n{COLORS['reset']}) ? ")
         if response.lower() == "n":
             for filename in old_files:
                 os.remove(filename)
