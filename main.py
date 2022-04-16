@@ -75,7 +75,7 @@ AGES = [
     ('69', "65-69"),
     ('74', "70-74"),
     ('79', "75-79"),
-    ('80', "80 et +"),
+    ('80', "80 +"),
 ]
 
 REGIONS = {
@@ -369,9 +369,14 @@ def get_diagram_4(database: List[List[Any]]) -> Image.Image:
     dose_2 = float(line[28]) - dose_3
     dose_1 = float(line[27]) - (dose_2 + dose_3)
     data = [100-float(line[27]), dose_1, dose_2, dose_3]
-    ax.pie(
+
+    # on spécifie le décalage des non vaccinés
+
+    _, _, autopct = ax.pie(
         data,
         colors=["tab:red", "tab:blue", "tab:orange", "tab:green"],
+        textprops={'size': 'large', 'fontweight': 'bold', 'color': 'white'},
+        autopct = lambda value: f"{value:.1f}%",
     )
 
     ax.legend(
@@ -516,3 +521,20 @@ if __name__ == "__main__": # on permet à un autre programme d'utiliser le code
         diagram6,
     ]):
         diagram.save(f"output/diagram_{i+1}.png")
+    
+    # exportation des images dans une seule image
+    diagram_size_x, diagram_size_y = diagram1.size
+
+    # on crée une image vide
+    img = Image.new("RGB", (diagram_size_x * 2, diagram_size_y * 3))
+
+    # on colle les diagrammes dans l'image
+    img.paste(diagram1, (0, 0))
+    img.paste(diagram2, (diagram_size_x, 0))
+    img.paste(diagram3, (0, diagram_size_y))
+    img.paste(diagram4, (diagram_size_x, diagram_size_y))
+    img.paste(diagram5, (0, diagram_size_y * 2))
+    img.paste(diagram6, (diagram_size_x, diagram_size_y * 2))
+
+    # on enregistre l'image dans le fichier output.png
+    img.save("output.png")
