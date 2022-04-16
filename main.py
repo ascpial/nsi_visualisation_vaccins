@@ -294,6 +294,13 @@ def apply_filter(
 def convert_database(
     data: List[List[Any]],
 ) -> List[List[Any]]:
+    """Convertit certaines colonnes de la database vers des types plus appropriés
+
+    :param data: La base de données à convertir
+    :type data: List[List[Any]]
+    :return: La base de données convertie
+    :rtype: List[List[Any]]
+    """
     for row in data:
         if not isinstance(row[2], datetime.datetime):
             row[2] = datetime.datetime.fromisoformat(row[2])
@@ -302,6 +309,14 @@ def convert_database(
 
 # Partie de traitement des images
 def export_plot_to_image(fig=None) -> Image.Image:
+    """Permet d'exporter le graphique matplotlib en image
+
+    :param fig: La figure matplotlib à convertir.
+    Si la figure n'est pas spécifiée, alors la figure courante est utilisée, par défaut à None
+    :type fig: pyplot.subplots()[1], optional
+    :return: L'image de la figure
+    :rtype: Image.Image
+    """
     buffer = io.BytesIO()
     if fig is None:
         plt.savefig(buffer, format='png')
@@ -313,6 +328,16 @@ def export_plot_to_image(fig=None) -> Image.Image:
     return img
 
 def get_diagram_1(database: List[List[Any]]) -> Image.Image:
+    """Retourne le prmier diagramme. Il affiche le nombre cumulé de
+    personnes vaccinées dans la région indiquée au cour du temps.
+
+    :param database: Las base de données d'où proviennent les données.
+    Elle doit être convertie avec la fonction convert_database(),
+    et doit ne contenir que les lignes de la région indiquée.
+    :type database: List[List[Any]]
+    :return: L'image correspondant au graphique
+    :rtype: Image.Image
+    """
     une_dose = [
         float(ligne[24]) for ligne in database
     ]
@@ -338,6 +363,15 @@ def get_diagram_1(database: List[List[Any]]) -> Image.Image:
     return export_plot_to_image(fig)
 
 def get_diagram_2(database: List[List[Any]]) -> Image.Image:
+    """Retourne le second diagramme. Il affiche l'état de la
+    couverture vaccinale en fonction du sexe dans la région indiquée.
+
+    :param database: La base de données d'où proviennent les données.
+    Elle ne doit contenir que les données de la région indiquée.
+    :type database: List[List[Any]]
+    :return: L'image correspondant au graphique
+    :rtype: Image.Image
+    """
     last_data = database[-1]
     
     axes = ['Hommes', 'Femmes', 'Couverture totale']
@@ -353,6 +387,18 @@ def get_diagram_2(database: List[List[Any]]) -> Image.Image:
     return export_plot_to_image(fig)
 
 def get_diagram_3(database: List[List[Any]]) -> Image.Image:
+    """Retourne le troisième diagramme. Il affiche l'état de la
+    couverture vaccinale en fonction de la classe d'âge dans la
+    région indiquée.
+
+    :param database: La base de données d'où proviennent les données.
+    Elle doit être convertie avec la fonction convert_database(),
+    et ne doit contenir que les lignes de la région indiquée, tout en
+    conservant les données de la classe d'âge.
+    :type database: List[List[Any]]
+    :return: L'image correspondant au graphique
+    :rtype: Image.Image
+    """
     fig, ax = plt.subplots()
     ax.set_title("Évolution de la couverture vaccinale")
     ax.set_ylabel("Pourcentage de population vaccinée")
@@ -369,6 +415,15 @@ def get_diagram_3(database: List[List[Any]]) -> Image.Image:
     return export_plot_to_image(fig)
 
 def get_diagram_4(database: List[List[Any]]) -> Image.Image:
+    """Retourne le quatrième diagramme. Il affiche l'état de la
+    vaccination dans un diagrame camembert dans la région indiquée.
+
+    :param database: La base de données d'où proviennent les données.
+    Elle ne doit contenir que les informations de la région indiquée.
+    :type database: List[List[Any]]
+    :return: L'image correspondant au graphique
+    :rtype: Image.Image
+    """
     fig, ax = plt.subplots()
     ax.set_title(f"État de la vaccination")
 
@@ -396,6 +451,17 @@ def get_diagram_4(database: List[List[Any]]) -> Image.Image:
     return export_plot_to_image(fig)
 
 def get_diagram_5(database: List[List[Any]]) -> Image.Image:
+    """Retourne le diagramme cinq. Il affiche la répartition de la
+    vaccination en fonction de la classe d'âge dans la région
+    indiquée.
+
+    :param database: La base de données d'où proviennent les données.
+    Elle ne doit contenir que les informations de la région indiquée,
+    et contenir les informations de la classe d'âge.
+    :type database: List[List[Any]]
+    :return: L'image correspondant au graphique
+    :rtype: Image.Image
+    """
     fig, ax = plt.subplots()
     ax.set_title("Répartition des vaccinations sur les classes d'âges")
     ax.set_ylabel("Classe d'âge")
@@ -429,6 +495,15 @@ def get_diagram_5(database: List[List[Any]]) -> Image.Image:
     return export_plot_to_image(fig)
 
 def get_diagram_6(database: List[List[Any]]) -> Image.Image:
+    """Retourne le diagramme six. Il affiche les cinq régions où la
+    couverture vaccinale est la plus élevée.
+
+    :param database: La base de données d'où proviennent les données.
+    Elle doit contenir les informations de toutes les régions.
+    :type database: List[List[Any]]
+    :return: L'image correspondant au graphique
+    :rtype: Image.Image
+    """
     fig, ax = plt.subplots()
     ax.set_title("5 régions ayant la meilleure couverture vaccinale")
     ax.set_ylabel("Couverture vaccinale (en %)")
