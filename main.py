@@ -1,88 +1,16 @@
-"""
- 0: reg;
- 1: clage_vacsi;
- 2: jour;
- 3: n_dose1_h;
- 4: n_complet_h;
- 5: n_rappel_h;
- 6: n_cum_dose1_h;
- 7: n_cum_complet_h;
- 8: n_cum_rappel_h;
- 9: couv_dose1_h;
-10: couv_complet_h;
-11: couv_rappel_h;
-12: n_dose1_f;
-13: n_complet_f;
-14: n_rappel_f;
-15: n_cum_dose1_f;
-16: n_cum_complet_f;
-17: n_cum_rappel_f;
-18: couv_dose1_f;
-19: couv_complet_f;
-20: couv_rappel_f;
-21: n_dose1_e;
-22: n_complet_e;
-23: n_rappel_e;
-24: n_cum_dose1_e;
-25: n_cum_complet_e;
-26: n_cum_rappel_e;
-27: couv_dose1_e;
-28: couv_complet_e;
-29: couv_rappel_e
-"""
-"""
- 0: reg;
- 1: clage_vacsi;
- 2: jour;
- 3: n_dose1_h;
- 4: n_complet_h;
- 5: n_rappel_h;
- 6: n_2_rappel_h;
- 7: n_cum_dose1_h;
- 8: n_cum_complet_h;
- 9: n_cum_rappel_h;
-10: n_cum_2_rappel_h;
-11: couv_dose1_h;
-12: couv_complet_h;
-13: couv_rappel_h;
-14: couv_2_rappel_h;
-15: n_dose1_f;
-16: n_complet_f;
-17: n_rappel_f;
-18: n_2_rappel_f;
-19: n_cum_dose1_f;
-20: n_cum_complet_f;
-21: n_cum_rappel_f;
-22: n_cum_2_rappel_f;
-23: couv_dose1_f;
-24: couv_complet_f;
-25: couv_rappel_f;
-26: couv_2_rappel_f;
-27: n_dose1_e;
-28: n_complet_e;
-29: n_rappel_e;
-30: n_2_rappel_e;
-31: n_cum_dose1_e;
-32: n_cum_complet_e;
-33: n_cum_rappel_e;
-34: n_cum_2_rappel_e;
-35: couv_dose1_e;
-36: couv_complet_e;
-37: couv_rappel_e;
-38: couv_2_rappel_e
-"""
-
 # Importation des utilitaires n'étant pas en rapports avec la logique du code
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 # Importation du module de lecture de base de données
+import os
 import csv
 
 # Importation du module utilisé pour la détecection automatique du fichier
 import glob
 
-# Importation du module nécessaire à la gestion du temps
+# Importation des module nécessaire à la gestion du temps
 import datetime
+import time
 
 import io # nécessaire pour la conversion de l'image plot en image PIL
 
@@ -803,10 +731,28 @@ if __name__ == "__main__": # on permet à un autre programme d'utiliser le code
     img.paste(diagram6, (diagram_size_x, diagram_size_y * 2 + 64))
 
     # on affiche en petit le nom de la région en dessous du titre
+    # cette ligne de code risque de provoquer une erreur sur linux ou macos
     font = ImageFont.truetype("arial.ttf", 30)
-    img_draw.text((diagram_size_x, 60), f"Région : {REGIONS[reg]}", (0, 0, 0), font=font, anchor="mm")
+    if date is not None:
+        # on formate la date au format "jour/mois/année"
+        formated_date = time.strftime("%d/%m/%Y", date[1].timetuple())
+    else:
+        last_date = database_fall[-1][JOUR]
+        formated_date = time.strftime("%d/%m/%Y", last_date.timetuple())
+    img_draw.text((diagram_size_x, 60), f"Région : {REGIONS[reg]}, date : {formated_date}", (0, 0, 0), font=font, anchor="mm")
+
+    # si output.png existe alors on cherche un nom de fichier au format output_1.png, output_2.png, etc.
+    # sinon on prend output.png
+    if not os.path.exists("output.png"):
+        output_path = "output.png"
+    else:
+        # on cherche le premier nom de fichier disponible
+        i = 1
+        while os.path.exists(f"output_{i}.png"):
+            i += 1
+        output_path = f"output_{i}.png"
 
     # on enregistre l'image dans le fichier output.png
-    img.save("output.png")
+    img.save(output_path)
     
     print(f"{COLORS['fg']['green']}Fait{COLORS['reset']}")
