@@ -30,7 +30,6 @@
 28: couv_complet_e;
 29: couv_rappel_e
 """
-
 # Importation des utilitaires n'étant pas en rapports avec la logique du code
 from typing import Any, Callable, List, Optional, Tuple, Union
 
@@ -43,14 +42,17 @@ import glob
 # Importation du module nécessaire à la gestion du temps
 import datetime
 
-# Importation des modules nécessaires au traitement de l'image
-import matplotlib.pyplot as plt
-from PIL import Image, ImageDraw, ImageFont
-
 import io # nécessaire pour la conversion de l'image plot en image PIL
 
-# des plus jolis affichages :P
-from utils import colors
+# On indique les modules à importer si une des importations échoue
+try:
+    # Importation des modules nécessaires au traitement de l'image
+    import matplotlib.pyplot as plt
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError as e:
+    print("Vous devez installer les modules matplotlib et pillow pour utiliser ce programme")
+    print("Pour installer les modules, utilisez la commande suivante:")
+    print("pip install pillow matplotlib")
 
 # On essait d'importer le module de téléchargement automatique
 # Si il n'existe pas, on désactive le support pour le téléchargement
@@ -96,6 +98,44 @@ REGIONS = {
     "84": "Auvergne-Rhône-Alpes",
     "93": "Provence-Alpes-Côte d’Azur",
     "94": "Corse",
+}
+
+# Cette constante permet de gérer l'affichage en couleur
+COLORS = {
+    'reset':'\033[0m',
+    'bold':'\033[01m',
+    'disable':'\033[02m',
+    'underline':'\033[04m',
+    'reverse':'\033[07m',
+    'strikethrough':'\033[09m',
+    'invisible':'\033[08m',
+    'fg': {
+        'black':'\033[30m',
+        'red':'\033[31m',
+        'green':'\033[32m',
+        'orange':'\033[33m',
+        'blue':'\033[34m',
+        'purple':'\033[35m',
+        'cyan':'\033[36m',
+        'lightgrey':'\033[37m',
+        'darkgrey':'\033[90m',
+        'lightred':'\033[91m',
+        'lightgreen':'\033[92m',
+        'yellow':'\033[93m',
+        'lightblue':'\033[94m',
+        'pink':'\033[95m',
+        'lightcyan':'\033[96m',
+    },
+    'bg': {
+        'black':'\033[40m',
+        'red':'\033[41m',
+        'green':'\033[42m',
+        'orange':'\033[43m',
+        'blue':'\033[44m',
+        'purple':'\033[45m',
+        'cyan':'\033[46m',
+        'lightgrey':'\033[47m',
+    }
 }
 
 # Section de lecture de la base de données
@@ -149,9 +189,9 @@ def ask_file() -> str:
     :rtype: str
     """
     chemin = input(
-        f"Chemin du fichier à lire (laisser vide pour une détection automatique){' (saississez d pour le téléchargement automatique)' if DOWNLOAD_SUPPORT else ''} : {colors['fg']['yellow']}"
+        f"Chemin du fichier à lire (laisser vide pour une détection automatique){' (saississez d pour le téléchargement automatique)' if DOWNLOAD_SUPPORT else ''} : {COLORS['fg']['yellow']}"
     )
-    print(colors['reset'], end="")
+    print(COLORS['reset'], end="")
 
     if chemin == 'd' and DOWNLOAD_SUPPORT:
         chemin = start_download()
@@ -161,8 +201,8 @@ def ask_file() -> str:
         
         # on n'a pas trouvé de fichier
         if len(chemins) == 0:
-            print(f"{colors['fg']['red']}Aucun fichier correspondant n'a été trouvé dans le répertoire actuel.{colors['reset']}")
-            print(f"{colors['underline']}Merci de spécifier le chemin du fichier.{colors['reset']}")
+            print(f"{COLORS['fg']['red']}Aucun fichier correspondant n'a été trouvé dans le répertoire actuel.{COLORS['reset']}")
+            print(f"{COLORS['underline']}Merci de spécifier le chemin du fichier.{COLORS['reset']}")
             return ask_file() # on redemande le fichier
         
         # si il y a plusieurs fichiers qui correspondent
@@ -171,7 +211,7 @@ def ask_file() -> str:
             while not selected:
                 print("Les fichiers suivants ont étés trouvés :")
                 for i, chemin_possible in enumerate(chemins): # affichage des chemins trouvés
-                    print(f" {colors['reverse']}{i}{colors['reset']} : {chemin_possible}") # affichage au format "0 : [CHEMIN]"
+                    print(f" {COLORS['reverse']}{i}{COLORS['reset']} : {chemin_possible}") # affichage au format "0 : [CHEMIN]"
                 index = input("Indiquez l'indice du fichier cible : ")
                 if not index.isdigit(): # on demande à nouveau le chemin si la valeur indiquée n'est pas un nombre
                     print("L'indice indiqué n'est pas un nombre.")
@@ -182,18 +222,18 @@ def ask_file() -> str:
                     continue
                 chemin = chemins[index] # on récupère le chemin indiqué
                 selected = True # on sort de la boucle
-            print(f"{colors['fg']['green']}Le fichier {chemin} a été selectionné.{colors['reset']}") # on affiche le chemin du fichier
+            print(f"{COLORS['fg']['green']}Le fichier {chemin} a été selectionné.{COLORS['reset']}") # on affiche le chemin du fichier
         
         # on a un seul fichier, on le retourne
         else:
             chemin = chemins[0] # on récupère le fichier
-            print(f"{colors['fg']['green']}Le fichier {chemin} a bien été trouvé !{colors['reset']}")
+            print(f"{COLORS['fg']['green']}Le fichier {chemin} a bien été trouvé !{COLORS['reset']}")
 
     return chemin
 
 def ask_date(message: str = "Entrez la date (laissez vide pour ne pas utiliser de date): ") -> datetime.datetime:
-    raw_date = input(message + colors['fg']['yellow'])
-    print(colors['reset'], end="")
+    raw_date = input(message + COLORS['fg']['yellow'])
+    print(COLORS['reset'], end="")
     if raw_date == "":
         return None # on désactive la date si on en rentre rien
     if raw_date.isdigit(): # Si la date est un entier, on considère qu'il s'agit d'un timestamp Unix
@@ -221,7 +261,7 @@ def ask_date(message: str = "Entrez la date (laissez vide pour ne pas utiliser d
         except ValueError:
             pass
         # TODO mettre plus de formats de dates et heure
-        print(f"{colors['fg']['red']}Je n'ai pas comprit la date {raw_date} !{colors['reset']} Réessaies avec un autre format !") # on affiche un message d'erreur
+        print(f"{COLORS['fg']['red']}Je n'ai pas comprit la date {raw_date} !{COLORS['reset']} Réessaies avec un autre format !") # on affiche un message d'erreur
         return ask_date(message) # on rappelle la fonction pour redemander à l'utilisateur la date
 
 # Partie de traitement des données
@@ -454,21 +494,21 @@ if __name__ == "__main__": # on permet à un autre programme d'utiliser le code
     # end permet de ne pas mettre de retour à la ligne
     # flush permet d'afficher le texte immédiatement sans attendre le retour à la ligne
     database = load_file(database_path)
-    print(f"{colors['fg']['green']}Fait{colors['reset']}")
+    print(f"{COLORS['fg']['green']}Fait{COLORS['reset']}")
 
     reg = None
     while reg is None:
-        reg = input(f"Indiquez un filtre de région : {colors['fg']['yellow']}") # on demande le code de la région
-        print(colors['reset'], end="")
+        reg = input(f"Indiquez un filtre de région : {COLORS['fg']['yellow']}") # on demande le code de la région
+        print(COLORS['reset'], end="")
         if reg == "":
             reg = None
         else:
             print("Vérification du filtre...", end=" ", flush=True)
             if [reg] not in projection(database, (0,)): # on valide le code de la région pour éviter de n'avoir aucunes données
-                print(f"{colors['fg']['red']}Filtre invalide{colors['reset']}")
+                print(f"{COLORS['fg']['red']}Filtre invalide{COLORS['reset']}")
                 reg = None
             else:
-                print(f"{colors['fg']['green']}Filtre valide{colors['reset']}")
+                print(f"{COLORS['fg']['green']}Filtre valide{COLORS['reset']}")
     
     print("La plus grande date indiquée sera la date utilisée pour les graphiques instantannés.")
     print("Si aucune limite n'est spécifiée, les données les plus récentes sont utilisées.")
@@ -502,7 +542,7 @@ if __name__ == "__main__": # on permet à un autre programme d'utiliser le code
     database_fall = convert_database(database_fall)
     database_fage = convert_database(database_fage)
     database_freg = convert_database(database_freg)
-    print(f"{colors['fg']['green']}Fait{colors['reset']}")
+    print(f"{COLORS['fg']['green']}Fait{COLORS['reset']}")
 
     print("Génération des images...", end=" ", flush=True)
     diagram1 = get_diagram_1(database_fall)
@@ -511,7 +551,7 @@ if __name__ == "__main__": # on permet à un autre programme d'utiliser le code
     diagram4 = get_diagram_4(database_fall)
     diagram5 = get_diagram_5(database_fage)
     diagram6 = get_diagram_6(database_freg)
-    print(f"{colors['fg']['green']}Fait{colors['reset']}")
+    print(f"{COLORS['fg']['green']}Fait{COLORS['reset']}")
 
     print("Génération de l'image finale...", end=" ", flush=True)
     
@@ -541,4 +581,4 @@ if __name__ == "__main__": # on permet à un autre programme d'utiliser le code
     # on enregistre l'image dans le fichier output.png
     img.save("output.png")
     
-    print(f"{colors['fg']['green']}Fait{colors['reset']}")
+    print(f"{COLORS['fg']['green']}Fait{COLORS['reset']}")
