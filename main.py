@@ -1,3 +1,77 @@
+"""
+ 0: reg;
+ 1: clage_vacsi;
+ 2: jour;
+ 3: n_dose1_h;
+ 4: n_complet_h;
+ 5: n_rappel_h;
+ 6: n_cum_dose1_h;
+ 7: n_cum_complet_h;
+ 8: n_cum_rappel_h;
+ 9: couv_dose1_h;
+10: couv_complet_h;
+11: couv_rappel_h;
+12: n_dose1_f;
+13: n_complet_f;
+14: n_rappel_f;
+15: n_cum_dose1_f;
+16: n_cum_complet_f;
+17: n_cum_rappel_f;
+18: couv_dose1_f;
+19: couv_complet_f;
+20: couv_rappel_f;
+21: n_dose1_e;
+22: n_complet_e;
+23: n_rappel_e;
+24: n_cum_dose1_e;
+25: n_cum_complet_e;
+26: n_cum_rappel_e;
+27: couv_dose1_e;
+28: couv_complet_e;
+29: couv_rappel_e
+"""
+"""
+ 0: reg;
+ 1: clage_vacsi;
+ 2: jour;
+ 3: n_dose1_h;
+ 4: n_complet_h;
+ 5: n_rappel_h;
+ 6: n_2_rappel_h;
+ 7: n_cum_dose1_h;
+ 8: n_cum_complet_h;
+ 9: n_cum_rappel_h;
+10: n_cum_2_rappel_h;
+11: couv_dose1_h;
+12: couv_complet_h;
+13: couv_rappel_h;
+14: couv_2_rappel_h;
+15: n_dose1_f;
+16: n_complet_f;
+17: n_rappel_f;
+18: n_2_rappel_f;
+19: n_cum_dose1_f;
+20: n_cum_complet_f;
+21: n_cum_rappel_f;
+22: n_cum_2_rappel_f;
+23: couv_dose1_f;
+24: couv_complet_f;
+25: couv_rappel_f;
+26: couv_2_rappel_f;
+27: n_dose1_e;
+28: n_complet_e;
+29: n_rappel_e;
+30: n_2_rappel_e;
+31: n_cum_dose1_e;
+32: n_cum_complet_e;
+33: n_cum_rappel_e;
+34: n_cum_2_rappel_e;
+35: couv_dose1_e;
+36: couv_complet_e;
+37: couv_rappel_e;
+38: couv_2_rappel_e
+"""
+
 # Importation des utilitaires n'étant pas en rapports avec la logique du code
 from typing import Any, Callable, List, Optional, Tuple, Union
 
@@ -17,6 +91,7 @@ try:
     # Importation des modules nécessaires au traitement de l'image
     import matplotlib.pyplot as plt
     from PIL import Image, ImageDraw, ImageFont
+    import numpy as np
 except ImportError as e:
     print("Vous devez installer les modules matplotlib et pillow pour utiliser ce programme")
     print("Pour installer les modules, utilisez la commande suivante:")
@@ -67,6 +142,22 @@ REGIONS = {
     "93": "Provence-Alpes-Côte d’Azur",
     "94": "Corse",
 }
+
+REG = 0
+AGE = 1
+JOUR = 2
+CUMULE_DOSE1_E = 31
+CUMULE_COMPLET_E = 32
+CUMULE_RAPPEL_E = 33
+CUMULE_2_RAPPEL_E = 34
+
+COUV_DOSE1_E = 35
+COUV_COMPLET_E = 36
+COUV_RAPPEL_E = 37
+COUV_2_RAPPEL_E = 38
+
+COUV_COMPLET_H = 12
+COUV_COMPLET_F = 24
 
 # Cette constante permet de gérer l'affichage en couleur
 COLORS = {
@@ -261,19 +352,19 @@ def filter_check(
     """
     check = True
     if not keep_ages:
-        check = check and row[1] == "0"
+        check = check and row[AGE] == "0"
     
     if reg is not None: # on vérifie qu'il faut appliquer le filtre de région
-        check = check and row[0] == reg
+        check = check and row[REG] == reg
     
     if date is not None: # on vérifie qu'il faut appliquer le filtre de date
         row_date = datetime.datetime.fromisoformat(row[2])
         # récupération de la date sous forme d'un objet facilement utilisable en python
         date_check = True
         # on vérifie que la date est bien comprise entre les limites
-        if date[0] is not None: # on ignore le cas où on a pas de limite minimum
-            date_check = date_check and date[0] <= row_date
-        date_check = date_check and date[1] >= row_date
+        if date[REG] is not None: # on ignore le cas où on a pas de limite minimum
+            date_check = date_check and date[REG] <= row_date
+        date_check = date_check and date[AGE] >= row_date
         check = check and date_check
     
     return check
@@ -313,8 +404,8 @@ def convert_database(
     """
     for row in data:
         # on convertit la date en objet datetime.datetime si nécessaire
-        if not isinstance(row[2], datetime.datetime):
-            row[2] = datetime.datetime.fromisoformat(row[2])
+        if not isinstance(row[JOUR], datetime.datetime):
+            row[JOUR] = datetime.datetime.fromisoformat(row[2])
     
     return data
 
@@ -357,16 +448,19 @@ def get_diagram_1(database: List[List[Any]]) -> Image.Image:
     # on récupère les données correspondant aux différents stades de
     # vaccination
     une_dose = [
-        float(ligne[24]) for ligne in database
+        float(ligne[CUMULE_DOSE1_E]) for ligne in database
     ]
     complet = [
-        float(ligne[25]) for ligne in database
+        float(ligne[CUMULE_COMPLET_E]) for ligne in database
     ]
     rappel = [
-        float(ligne[26]) for ligne in database
+        float(ligne[CUMULE_RAPPEL_E]) for ligne in database
+    ]
+    rappel_2 = [
+        float(ligne[CUMULE_2_RAPPEL_E]) for ligne in database
     ]
     x_axis = [
-        ligne[2] for ligne in database
+        ligne[JOUR] for ligne in database
     ]
     # on créé le graphique
     fig, ax = plt.subplots()
@@ -380,6 +474,7 @@ def get_diagram_1(database: List[List[Any]]) -> Image.Image:
     ax.fill_between(x_axis, une_dose, 0, label="Une dose (partiel)", color="tab:blue")
     ax.fill_between(x_axis, complet, 0, label="Deux doses (complet)", color="tab:orange")
     ax.fill_between(x_axis, rappel, 0, label="Trois doses (rappel)", color="tab:green")
+    ax.fill_between(x_axis, rappel_2, 0, label="Quatre doses (rappel 2)", color="tab:olive")
 
     # on indique l'emplacement de la légende
     ax.legend(loc='upper left')
@@ -403,7 +498,11 @@ def get_diagram_2(database: List[List[Any]]) -> Image.Image:
     # on indique les étiquettes
     axes = ['Hommes', 'Femmes', 'Couverture totale']
     # on récupère les valeurs
-    values = [float(last_data[10]), float(last_data[19]), float(last_data[28])]
+    values = [
+        float(last_data[COUV_COMPLET_H]),
+        float(last_data[COUV_COMPLET_F]),
+        float(last_data[COUV_COMPLET_E]),
+    ]
 
     # on créé le graphique
     fig, ax = plt.subplots()
@@ -441,16 +540,34 @@ def get_diagram_3(database: List[List[Any]]) -> Image.Image:
     ax.set_ylabel("Pourcentage de population vaccinée")
     # on tourne les valeurs de l'axe X de 30°
     plt.xticks(rotation=30, ha="right")
+    
+    # on récupère une liste de 14 couleurs
+    colors = plt.cm.brg([
+        0.,
+        0.07692308,
+        0.15384615,
+        0.23076923,
+        0.30769231,
+        0.38461538,
+        0.46153846,
+        0.53846154,
+        0.61538462,
+        0.69230769,
+        0.76923077,
+        0.84615385,
+        0.92307692,
+        1.
+    ])
 
-    for code, label in AGES: # pour chaque classe d'âges
+    for i, (code, label) in enumerate(AGES): # pour chaque classe d'âges
         # on récupère toutes les données de la classe d'âges
         data = [line for line in database if line[1]==code]
         # on récupère les valeurs de la couverture vaccinale
-        couv = [float(line[28]) for line in data]
+        couv = [float(line[COUV_COMPLET_E]) for line in data]
         # on récupère les dates correspondantes aux valeurs
         dates = [line[2] for line in data]
         # on affiche le graphique
-        ax.plot(dates, couv, label=label)
+        ax.plot(dates, couv, label=label, color=colors[i])
     
     # on indique l'emplacement de la légende
     ax.legend(loc='upper left', fontsize=7)
@@ -475,15 +592,19 @@ def get_diagram_4(database: List[List[Any]]) -> Image.Image:
     # on récupère les données en prenant en compte que les données sont triées par date
     line = database[-1]
     # on récupère les valeurs de la couverture vaccinale
-    dose_3 = float(line[29])
-    dose_2 = float(line[28]) - dose_3
-    dose_1 = float(line[27]) - (dose_2 + dose_3)
-    data = [100-float(line[27]), dose_1, dose_2, dose_3]
+    dose_4 = float(line[COUV_2_RAPPEL_E])
+    dose_3 = float(line[COUV_RAPPEL_E]) - dose_4
+    dose_2 = float(line[COUV_COMPLET_E]) - dose_3 - dose_4
+    dose_1 = float(line[COUV_DOSE1_E]) - dose_2 - dose_3 - dose_4
+    data = [
+        100-float(line[COUV_DOSE1_E]),
+        dose_1, dose_2, dose_3, dose_4,
+    ]
 
     # on créé le diagramme camembert
     ax.pie(
         data,
-        colors=["tab:red", "tab:blue", "tab:orange", "tab:green"],
+        colors=["tab:red", "tab:blue", "tab:orange", "tab:green", "tab:olive"],
         # on spécifie la mise en forme des labels
         textprops={'size': 'large', 'fontweight': 'bold', 'color': 'white'},
         autopct = lambda value: f"{value:.1f}%",
@@ -491,7 +612,7 @@ def get_diagram_4(database: List[List[Any]]) -> Image.Image:
 
     # on affiche le graphique
     ax.legend(
-        labels=["Pas vacciné", "Une dose (partiel)", "Deux doses (complet)", "Trois doses (rappel)"],
+        labels=["Pas vacciné", "Une dose (partiel)", "Deux doses (complet)", "Trois doses (rappel)", "Quatre doses (rappel 2)"],
         loc="lower left",
         bbox_to_anchor=(-0.3, 0.)
     )
@@ -519,25 +640,28 @@ def get_diagram_5(database: List[List[Any]]) -> Image.Image:
     ax.set_xlabel("Population vaccinée (en %)")
 
     # on récupère les données par dose
-    dose_1, dose_2, dose_3, non_vaccine = [], [], [], []
+    dose_4, dose_1, dose_2, dose_3, non_vaccine = [], [], [], [], []
     classe_age = []
     for code, label in AGES: # pour chaque classe d'âges
         data = [line for line in database if line[1]==code][-1]
         # on récupère les informations les plus récentes, en
         # assumant que les données sont triées par date croissante
-        age_dose_3 = float(data[29])
-        age_dose_2 = float(data[28]) - age_dose_3
-        age_dose_1 = float(data[27]) - (age_dose_2 + age_dose_3)
-        non_vaccine = 100 - float(data[27])
+        age_dose_4 = float(data[COUV_2_RAPPEL_E])
+        age_dose_3 = float(data[COUV_RAPPEL_E]) - age_dose_4
+        age_dose_2 = float(data[COUV_COMPLET_E]) - age_dose_3 - age_dose_4
+        age_dose_1 = float(data[COUV_DOSE1_E]) - age_dose_2 - age_dose_3 - age_dose_4
+        age_0_dose = 100 - float(data[COUV_DOSE1_E])
 
         # on ajoute les valeurs aux listes
-        non_vaccine.append(non_vaccine)
-        dose_1.append(age_dose_1 + non_vaccine)
-        dose_2.append(age_dose_2 + age_dose_1 + non_vaccine)
-        dose_3.append(age_dose_3 + age_dose_2 + age_dose_1 + non_vaccine)
+        non_vaccine.append(age_0_dose)
+        dose_1.append(age_dose_1 + age_0_dose)
+        dose_2.append(age_dose_2 + age_dose_1 + age_0_dose)
+        dose_3.append(age_dose_3 + age_dose_2 + age_dose_1 + age_0_dose)
+        dose_4.append(age_dose_4 + age_dose_3 + age_dose_2 + age_dose_1 + age_0_dose)
         # on ajoute la classe d'âge à la liste
         classe_age.append(label)
     
+    ax.barh(classe_age, dose_3, color="tab:olive", label="Quatre doses (rappel 2)")
     ax.barh(classe_age, dose_3, color="tab:green", label="Trois doses (rappel)")
     ax.barh(classe_age, dose_2, color="tab:orange", label="Deux doses (complet)")
     ax.barh(classe_age, dose_1, color="tab:blue", label="Une dose (partiel)")
@@ -575,7 +699,7 @@ def get_diagram_6(database: List[List[Any]]) -> Image.Image:
         # que les données sont triées par date croissante et limitée
         # à la date recherchée
         regions.append(
-            [code, float(reg_data[-1][28]), nom]
+            [code, float(reg_data[-1][COUV_COMPLET_E]), nom]
         )
     
     # on trie les régions par ordre décroissant
